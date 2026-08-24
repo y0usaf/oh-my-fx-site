@@ -1,0 +1,4 @@
+node_modules/
+.wrangler/
+zig-out/
+.DS_Store

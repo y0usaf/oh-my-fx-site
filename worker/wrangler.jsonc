@@ -1,0 +1,15 @@
+{
+  // oh-my-fx gateway proxy. Deploy:
+  //   cd worker
+  //   npx wrangler secret put GATEWAY_KEY
+  //   npx wrangler deploy
+  // Then set the site's WORKER_BASE to your deployed worker URL.
+  "name": "oh-my-fx-gateway",
+  "main": "worker.js",
+  "compatibility_date": "2026-01-01",
+  "vars": {
+    "SITE_ORIGIN": "*",
+    "UPSTREAM_BASE": "https://ai-gateway.vercel.sh",
+    "RATE_LIMIT": "20"
+  }
+}
