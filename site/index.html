@@ -546,7 +546,12 @@ if (!supportsJspi()) {
     //     the Worker injects GATEWAY_KEY server-side.
     //  2. otherwise         -> the wasm talks straight to the Vercel AI
     //     Gateway with a key from localStorage "FX_API_KEY" (or "" for demo).
-    const WORKER_BASE = ""; // e.g. "https://oh-my-fx-gateway.you.workers.dev"
+    // Local testing without editing this file: append ?worker=http://127.0.0.1:8788
+    // or set localStorage "FX_WORKER_BASE". Production: set WORKER_BASE below.
+    const WORKER_BASE =
+      new URLSearchParams(location.search).get("worker") ||
+      localStorage.getItem("FX_WORKER_BASE") ||
+      ""; // e.g. "https://oh-my-fx-gateway.you.workers.dev"
     let env = { AI_GATEWAY_API_KEY: "" };
     if (WORKER_BASE) {
       env = {
