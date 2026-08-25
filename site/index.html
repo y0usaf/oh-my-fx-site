@@ -114,7 +114,14 @@ main {
   min-height: calc(100vh - 120px);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+}
+.try-note {
+  margin: 0 0 16px;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--muted-foreground);
+  text-align: center;
 }
 
 /* Headline */
@@ -373,6 +380,8 @@ h1 {
       </p>
     </div>
 
+    <p class="try-note" role="note">You do have to <code>/login</code> to try <em>(please Vercel give me an account like fx.sh!)</em></p>
+
     <div class="term">
       <div class="term-window" role="application" aria-label="oh-my-fx terminal">
         <div class="term-bar">
@@ -525,6 +534,42 @@ if (!supportsJspi()) {
       get(id) { return localStorage.getItem(`fx.core.config.${id}`); },
       set(id, value) { localStorage.setItem(`fx.core.config.${id}`, value); },
     };
+    // Browser OAuth host: lets /login codex|grok complete device-login flows.
+    const oauthSessionStore = {
+      async load() {
+        const raw = localStorage.getItem("fx.oauth.session");
+        if (!raw) return null;
+        const rec = JSON.parse(raw);
+        return {
+          bytes: new Uint8Array(atob(rec.b64).split("").map((c) => c.charCodeAt(0))),
+          revision: rec.revision,
+        };
+      },
+      async commit(value, expectedRevision) {
+        const cur = JSON.parse(localStorage.getItem("fx.oauth.session") || "null");
+        if (cur && cur.revision !== expectedRevision) {
+          const error = new Error("oauth session revision conflict");
+          error.code = "FX_OAUTH_SESSION_REVISION_CONFLICT";
+          throw error;
+        }
+        const revision = String(Date.now());
+        localStorage.setItem(
+          "fx.oauth.session",
+          JSON.stringify({ b64: btoa(String.fromCharCode(...value)), revision }),
+        );
+        return { revision };
+      },
+      async remove(expectedRevision) {
+        const cur = JSON.parse(localStorage.getItem("fx.oauth.session") || "null");
+        if (cur && cur.revision !== expectedRevision) return "missing";
+        localStorage.removeItem("fx.oauth.session");
+        return true;
+      },
+    };
+    const openUrl = (url) => {
+      window.open(url, "_blank", "noopener");
+      return true;
+    };
     const promptHistoryStore = {
       load(workspaceRoot, limit) {
         const values = JSON.parse(localStorage.getItem(`fx.term.history.${workspaceRoot}`) || "[]");
@@ -563,9 +608,11 @@ if (!supportsJspi()) {
       env,
       configStore,
       promptHistoryStore,
+      oauthSessionStore,
+      openUrl,
     });
     runtime.interactive.then(() => terminal.focus());
-    window.__fxTerminal = { runtime, terminal, fitAddon, resizeObserver };
+    window.__fxTerminal = { runtime, terminal, fitAddon, resizeObserver, oauthSessionStore, openUrl };
   } catch (err) {
     if (typeof terminal !== "undefined") terminal.dispose?.();
     windowEl.classList.remove("live");
