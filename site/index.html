@@ -159,9 +159,19 @@ h1 {
 @media (min-width: 641px) { .install { font-size: 14px; } }
 .batteries {
   color: var(--fx-blue);
-  font-weight: 600;
+  font-family: monospace;
+  font-weight: 700;
   font-size: 13px;
-  margin: 16px 0 0;
+  animation: fx-rainbow 14s linear infinite;
+}
+@keyframes fx-rainbow {
+  0%, 100% { color: var(--fx-orange); }
+  25% { color: var(--fx-amber); }
+  50% { color: var(--fx-green); }
+  75% { color: var(--fx-blue); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .batteries { animation: none; }
 }
 .install-alt {
   color: var(--muted-foreground);
@@ -169,37 +179,14 @@ h1 {
   margin: 14px 0 0;
 }
 .copy {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0;
-  border: 0;
-  background: transparent;
+  font-family: inherit;
+  font-weight: 400;
   color: inherit;
-  cursor: pointer;
-  text-align: left;
+  cursor: copy;
+  -webkit-user-select: all;
+  user-select: all;
 }
-.copy code { font-family: inherit; font-weight: 600; }
-.copy .prompt { user-select: none; }
-.copy .glyph {
-  display: inline-flex;
-  color: var(--muted-foreground);
-  opacity: 1;
-  transition: opacity 120ms;
-}
-.copy:hover .glyph { opacity: 1; }
-.copy .copied-msg {
-  display: none;
-  color: var(--muted-foreground);
-}
-.copy.copied .copied-msg { display: inline; }
-.copy.copied .glyph { display: none; }
-@media (min-width: 641px) {
-  .copy .glyph { opacity: 0; }
-  .copy:focus-visible .glyph { opacity: 1; }
-}
-.sticky-note h1:hover,
-.copy:hover .prompt + code { color: var(--foreground); }
+.copy:hover { color: var(--foreground); }
 .version {
   margin: 14px 0 0;
   font-size: 13px;
@@ -386,19 +373,9 @@ h1 {
 <main>
   <div class="hero">
     <div class="hero-head">
-      <h1>Tiny, open, native coding agent.</h1>
-      <p class="batteries">Batteries now included.</p>
+      <h1>Tiny, open, native coding agent. <span class="batteries">Batteries now included.</span></h1>
       <p class="install">
-        <button type="button" class="copy" aria-label="Copy install command">
-          <span class="prompt">$ </span><code>curl -fsSL https://ohmyfx.sh/setup.sh | bash</code>
-          <span class="glyph" aria-hidden="true">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <rect x="5.5" y="5.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"></rect>
-              <path d="M10.5 3.5v-1a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-            </svg>
-          </span>
-          <span class="copied-msg" role="status">copied</span>
-        </button>
+        <span class="prompt">$ </span><code class="copy" title="Click to select — press Ctrl/Cmd+C to copy">curl -fsSL https://ohmyfx.sh/setup.sh | bash</code>
       </p>
       <p class="install-alt">or <code>nix run github:y0usaf/oh-my-fx</code></p>
       <p class="version">
@@ -467,31 +444,6 @@ h1 {
   </div>
 </main>
 
-<script>
-(function () {
-  const btn = document.querySelector(".copy");
-  if (!btn) return;
-  const text = "curl -fsSL https://ohmyfx.sh/setup.sh | bash";
-  btn.addEventListener("click", async () => {
-    let ok = false;
-    try { await navigator.clipboard.writeText(text); ok = true; }
-    catch (e) {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      try { ok = document.execCommand("copy"); } catch (e2) {}
-      ta.remove();
-    }
-    if (ok) {
-      btn.classList.add("copied");
-      setTimeout(() => btn.classList.remove("copied"), 1400);
-    }
-  });
-})();
-</script>
 <script type="module">
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
