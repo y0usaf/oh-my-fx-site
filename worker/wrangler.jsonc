@@ -11,6 +11,10 @@
     "directory": "../site",
     "binding": "ASSETS"
   },
+  "routes": [
+    { "pattern": "ohmyfx.sh", "custom_domain": true },
+    { "pattern": "www.ohmyfx.sh", "custom_domain": true }
+  ],
   "vars": {
     "SITE_ORIGIN": "*",
     "UPSTREAM_BASE": "https://ai-gateway.vercel.sh",
