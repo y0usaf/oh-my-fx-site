@@ -30,6 +30,7 @@ const MIME = {
   ".wasm": "application/wasm",
   ".svg": "image/svg+xml",
   ".png": "image/png",
+  ".sh": "text/x-shellscript",
   ".webp": "image/webp",
   ".json": "application/json",
   ".txt": "text/plain; charset=utf-8",

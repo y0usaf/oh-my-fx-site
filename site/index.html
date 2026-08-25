@@ -361,7 +361,7 @@ h1 {
       <h1>Tiny, open, native coding agent.</h1>
       <p class="install">
         <button type="button" class="copy" aria-label="Copy install command">
-          <span class="prompt">$ </span><code>nix run github:y0usaf/oh-my-fx</code>
+          <span class="prompt">$ </span><code>curl -fsSL https://ohmyfx.sh/setup.sh | bash</code>
           <span class="glyph" aria-hidden="true">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
               <rect x="5.5" y="5.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"></rect>
@@ -371,6 +371,7 @@ h1 {
           <span class="copied-msg" role="status">copied</span>
         </button>
       </p>
+      <p class="install-alt">or <code>nix run github:y0usaf/oh-my-fx</code></p>
       <p class="version">
         <span>v0.0.5</span> <a href="https://github.com/y0usaf/oh-my-fx" title="tracks vercel-labs/fx">(tracking)</a><span aria-hidden="true"> · </span>fork of vercel-labs/fx<span aria-hidden="true"> · </span>status: <span class="fg">experimental</span>
         <span class="note">
@@ -441,7 +442,7 @@ h1 {
 (function () {
   const btn = document.querySelector(".copy");
   if (!btn) return;
-  const text = "nix run github:y0usaf/oh-my-fx";
+  const text = "curl -fsSL https://ohmyfx.sh/setup.sh | bash";
   btn.addEventListener("click", async () => {
     let ok = false;
     try { await navigator.clipboard.writeText(text); ok = true; }
