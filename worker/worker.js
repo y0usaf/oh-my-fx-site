@@ -1,8 +1,14 @@
-// oh-my-fx gateway proxy — deploys on Cloudflare Workers.
+// oh-my-fx — one Cloudflare Worker serving both the site and the gateway
+// proxy (Workers Static Assets). One product, one URL, one deploy.
 //
-// The Vercel AI Gateway key lives ONLY here, as the GATEWAY_KEY secret.
-// The browser never sees it: the fx wasm in the page is pointed at this
-// worker's origin, and every gateway call is forwarded with the key injected.
+// Routing:
+//   /v1/*, /v3/*  -> proxied to UPSTREAM_BASE with GATEWAY_KEY injected
+//   everything    -> static assets from the "site" directory (env.ASSETS)
+//                    or, locally, from the sibling ../site in the harness
+//
+// The Vercel AI Gateway key lives ONLY in the GATEWAY_KEY secret. The browser
+// never sees it: the fx wasm in the page is pointed at this worker's origin,
+// and every gateway call is forwarded with the key injected server-side.
 //
 // Bindings (wrangler):
 //   GATEWAY_KEY    (secret)  the Vercel AI Gateway API key
@@ -12,11 +18,21 @@
 
 const DEFAULT_UPSTREAM = "https://ai-gateway.vercel.sh";
 
-const CORS_HEADERS_EXTRA =
+const CORS_HEADERS =
   "authorization, content-type, ai-gateway-auth-method, ai-gateway-protocol-version, ai-model-id, ai-language-model-id, ai-language-model-specification-version, ai-language-model-streaming, ai-reporting-tags, ai-reporting-user, http-referer, x-title, x-ai-gateway-api-key, x-api-key, x-session-id, x-session-affinity";
+
+function isGatewayPath(pathname) {
+  return pathname.startsWith("/v1") || pathname.startsWith("/v3");
+}
 
 export default {
   async fetch(request, env) {
+    const url = new URL(request.url);
+
+    if (!isGatewayPath(url.pathname)) {
+      return env.ASSETS ? env.ASSETS.fetch(request) : new Response("not found", { status: 404 });
+    }
+
     const origin = request.headers.get("Origin");
     const siteOrigin = (env.SITE_ORIGIN || "*").split(",").map((s) => s.trim());
     const cors = (res) => {
@@ -27,7 +43,7 @@ export default {
         h.set("Vary", "Origin");
       }
       h.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-      h.set("Access-Control-Allow-Headers", CORS_HEADERS_EXTRA);
+      h.set("Access-Control-Allow-Headers", CORS_HEADERS);
       h.set("Access-Control-Max-Age", "600");
       return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });
     };
@@ -49,7 +65,7 @@ export default {
     globalThis.__fxRate.set(ip, fresh);
 
     const base = (env.UPSTREAM_BASE || DEFAULT_UPSTREAM).replace(/\/+$/, "");
-    const url = base + new URL(request.url).pathname + new URL(request.url).search;
+    const target = base + url.pathname + url.search;
 
     const headers = new Headers(request.headers);
     headers.delete("authorization");
@@ -62,7 +78,7 @@ export default {
         init.body = request.body;
         init.duplex = "half";
       }
-      const upstream = await fetch(url, init);
+      const upstream = await fetch(target, init);
       return cors(upstream);
     } catch (err) {
       return cors(Response.json({ error: "upstream_error", message: String(err?.message || err) }, { status: 502 }));

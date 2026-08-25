@@ -1,10 +1,13 @@
-// Local harness for worker/worker.js — runs the same handler locally on PORT
-// (default 8788) with GATEWAY_KEY from the environment or worker/.dev.vars.
-// This is a test stand-in for `wrangler dev`; it exercises the exact fetch
-// handler that deploys, minus Cloudflare-specific bindings.
+// Local harness for worker/worker.js — mirrors production routing:
+//   /v1/*, /v3/*  -> passed to the worker (gateway proxy)
+//   everything    -> served statically from ../site
+// GATEWAY_KEY from the environment or worker/.dev.vars. Test stand-in for
+// `wrangler dev` (same handler, minus Cloudflare bindings).
 import http from "node:http";
-import { readFileSync, existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { resolve, extname, normalize, join } from "node:path";
 import worker from "../worker/worker.js";
 
 function loadEnv() {
@@ -19,24 +22,61 @@ function loadEnv() {
   return env;
 }
 
+const MIME = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".wasm": "application/wasm",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".json": "application/json",
+  ".txt": "text/plain; charset=utf-8",
+};
+
 const env = loadEnv();
 const port = Number(env.PORT || 8788);
+const siteRoot = resolve(fileURLToPath(new URL("../site", import.meta.url)));
+
+async function serveStatic(pathname) {
+  let p = pathname === "/" ? "/index.html" : pathname;
+  if (p.includes("..")) return new Response("forbidden", { status: 403 });
+  const file = normalize(join(siteRoot, p));
+  if (!file.startsWith(siteRoot)) return new Response("forbidden", { status: 403 });
+  try {
+    const data = await readFile(file);
+    return new Response(data, {
+      headers: { "Content-Type": MIME[extname(file)] || "application/octet-stream", "Cache-Control": "no-cache" },
+    });
+  } catch {
+    return new Response("not found", { status: 404 });
+  }
+}
 
 const server = http.createServer(async (req, res) => {
-  const chunks = [];
-  for await (const c of req) chunks.push(c);
-  const body = chunks.length ? Buffer.concat(chunks) : undefined;
-  const r = new Request(`http://127.0.0.1:${port}${req.url}`, {
-    method: req.method,
-    headers: req.headers,
-    body: ["GET", "HEAD"].includes(req.method) ? undefined : body,
-    duplex: body ? "half" : undefined,
-  });
-  const resp = await worker.fetch(r, env);
+  const pathname = new URL(req.url, `http://127.0.0.1:${port}`).pathname;
+  const isGateway = pathname.startsWith("/v1") || pathname.startsWith("/v3");
+
+  let resp;
+  if (isGateway) {
+    const chunks = [];
+    for await (const c of req) chunks.push(c);
+    const body = chunks.length ? Buffer.concat(chunks) : undefined;
+    const r = new Request(`http://127.0.0.1:${port}${req.url}`, {
+      method: req.method,
+      headers: req.headers,
+      body: ["GET", "HEAD"].includes(req.method) ? undefined : body,
+      duplex: body ? "half" : undefined,
+    });
+    resp = await worker.fetch(r, env);
+  } else {
+    resp = await serveStatic(pathname);
+  }
   res.writeHead(resp.status, Object.fromEntries(resp.headers));
   res.end(Buffer.from(await resp.arrayBuffer()));
 });
 
 server.listen(port, () => {
-  console.log(`worker harness on :${port} → ${env.UPSTREAM_BASE || "https://ai-gateway.vercel.sh"}`);
+  console.log(`oh-my-fx local stack on :${port}  (assets: ../site, proxy → ${env.UPSTREAM_BASE || "https://ai-gateway.vercel.sh"})`);
 });

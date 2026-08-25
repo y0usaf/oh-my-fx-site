@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Local dev/test stack — no Cloudflare login, no CI.
-#   site   : http://127.0.0.1:8123/?worker=http://127.0.0.1:8788
-#   worker : http://127.0.0.1:8788  (proxies to UPSTREAM_BASE with GATEWAY_KEY)
+# Local dev/test stack — no Cloudflare login, no CI. One process serves both
+# the static site and the gateway proxy, exactly like the deployed Worker.
+#
+#   site+proxy : http://127.0.0.1:8788/   (WORKER_BASE defaults to same origin)
 #
 # GATEWAY_KEY comes from worker/.dev.vars (gitignored) or the environment.
 # Override the upstream for offline testing, e.g.:
@@ -9,19 +10,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-PORT_SITE="${PORT_SITE:-8123}"
-PORT_WORKER="${PORT_WORKER:-8788}"
+PORT="${PORT:-8788}"
 
-PORT="$PORT_WORKER" node "$ROOT/scripts/worker-local.mjs" &
-WPID=$!
-(
-  cd "$ROOT/site"
-  python3 -m http.server "$PORT_SITE" --bind 127.0.0.1
-) &
-SPID=$!
+PORT="$PORT" node "$ROOT/scripts/worker-local.mjs"
 
-trap 'kill "$WPID" "$SPID" 2>/dev/null' EXIT
-
-echo "site  : http://127.0.0.1:${PORT_SITE}/?worker=http://127.0.0.1:${PORT_WORKER}"
-echo "worker: http://127.0.0.1:${PORT_WORKER}   (Ctrl-C to stop)"
-wait
+trap 'kill 0' EXIT
