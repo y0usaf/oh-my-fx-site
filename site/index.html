@@ -11,9 +11,6 @@
 <meta property="og:description" content="Tiny, open, native coding agent. A minimal CLI written in Zig, optimized for research and embeddability as part of larger systems.">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23000'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='700' fill='%23fff' text-anchor='middle'%3Efx%3C/text%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@6.0.0/css/xterm.css">
 <script type="importmap">
 {
@@ -24,6 +21,13 @@
 }
 </script>
 <style>
+@font-face {
+  font-family: "Departure Mono";
+  src: url("departure-mono.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 :root {
   color-scheme: light;
   --fx-ink: #0b0b0b;
@@ -74,7 +78,7 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: "Geist Mono", "Geist Mono Fallback", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-family: "Departure Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -103,7 +107,7 @@ header {
   gap: 8px;
   margin: 0;
   color: var(--foreground);
-  font-weight: 600;
+  font-weight: 400;
 }
 .logo svg { flex: none; }
 .logo:hover, .nav a:hover { color: var(--foreground); }
@@ -141,6 +145,7 @@ main {
 h1 {
   margin: 8px 0 20px;
   color: var(--muted-foreground);
+  font-family: monospace;
   font-size: inherit;
   font-weight: 700;
   letter-spacing: normal;
@@ -282,11 +287,11 @@ h1 {
   overflow: hidden;
   margin: 0;
   padding: 14px 20px;
-  font: 14px/19px "Geist Mono", ui-monospace, monospace;
+  font: 14px/19px "Departure Mono", ui-monospace, monospace;
   color: var(--fx-dim);
   white-space: pre;
 }
-.fx-static .bright { color: var(--fx-bright); font-weight: 600; }
+.fx-static .bright { color: var(--fx-bright); font-weight: 400; }
 .fx-static .status { color: var(--fx-status); }
 .fx-static .auto { color: var(--fx-auto); }
 .cursor { color: var(--fx-bright); animation: fx-static-cursor-blink 1.2s step-end infinite; }
@@ -353,7 +358,7 @@ h1 {
 #features h2 {
   margin: 0 0 4px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--foreground);
 }
 #features p { margin: 0 0 40px; color: var(--muted-foreground); }
@@ -512,10 +517,10 @@ if (!supportsJspi()) {
     const terminal = new Terminal({
       cursorBlink: true,
       cursorStyle: "block",
-      fontFamily: '"Geist Mono", ui-monospace, monospace',
+      fontFamily: '"Departure Mono", ui-monospace, monospace',
       fontSize: 14,
       fontWeight: 400,
-      fontWeightBold: 600,
+      fontWeightBold: 400,
       lineHeight: 1.25,
       letterSpacing: 0,
       scrollback: 5000,
@@ -547,7 +552,7 @@ if (!supportsJspi()) {
     terminal.focus();
 
     // Font metrics are cosmetic; refresh when they arrive, never gate on them.
-    document.fonts.load('14px "Geist Mono"')
+    document.fonts.load('14px "Departure Mono"')
       .then(() => fitAddon.fit())
       .catch(() => {});
 

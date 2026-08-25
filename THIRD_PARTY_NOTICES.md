@@ -12,3 +12,10 @@ Apache License 2.0, with a copy in [site/Apache-2.0.txt](site/Apache-2.0.txt):
 The oh-my-fx fork of vercel-labs/fx carries the small gateway-routing patch
 used by the site; the fork lives at [y0usaf/oh-my-fx](https://github.com/y0usaf/oh-my-fx)
 (Apache-2.0).
+
+This repository also distributes the typeface
+[Departure Mono](https://github.com/rektdeckard/departure-mono) by Helena
+Zhang, licensed under the SIL Open Font License 1.1, with a copy in
+[site/OFL.txt](site/OFL.txt):
+
+- `site/departure-mono.woff2` — the Departure Mono web font
